@@ -42,6 +42,12 @@ class SessionIndicators {
     if (errorDetails) {
       title += `\nОшибка: ${errorDetails}`;
     }
+    
+    // Для кликабельных точек добавляем подсказку о возможности клика
+    if (indicator.dot.classList.contains('clickable') && (status === 'expired' || status === 'unavailable')) {
+      title += '\nКликните для переавторизации';
+    }
+    
     indicator.element.title = title;
   }
 

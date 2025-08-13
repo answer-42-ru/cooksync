@@ -24,12 +24,23 @@
       font-size: 11px;
     }
 
+
+
     .indicator-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       margin-right: 6px;
       flex-shrink: 0;
+    }
+
+    .indicator-dot.clickable {
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+
+    .indicator-dot.clickable:hover {
+      transform: scale(1.2);
     }
 
     .indicator-dot.active {
@@ -120,11 +131,11 @@
         <span class="indicator-label">Uchebnik TEST</span>
       </div>
       <div class="session-indicator" data-endpoint="School DEV">
-        <span class="indicator-dot loading"></span>
+        <span class="indicator-dot loading clickable" data-auth-url="https://school-dev.mos.ru/logout"></span>
         <span class="indicator-label">School DEV</span>
       </div>
       <div class="session-indicator" data-endpoint="School TEST">
-        <span class="indicator-dot loading"></span>
+        <span class="indicator-dot loading clickable" data-auth-url="https://school-test.mos.ru/logout"></span>
         <span class="indicator-label">School TEST</span>
       </div>
     </div>

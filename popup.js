@@ -25,6 +25,17 @@ document.getElementById("refresh-sessions").addEventListener("click", () => {
   refreshSessionStatuses();
 });
 
+// Добавляем обработчики для кликабельных точек (только для School DEV/TEST)
+document.addEventListener('click', (event) => {
+  if (event.target.classList.contains('indicator-dot') && event.target.classList.contains('clickable')) {
+    const authUrl = event.target.dataset.authUrl;
+    // Кликабельными делаем только красные точки (expired/unavailable)
+    if (authUrl && (event.target.classList.contains('expired') || event.target.classList.contains('unavailable'))) {
+      openAuthPage(authUrl);
+    }
+  }
+});
+
 document.getElementById("vvm-dev").addEventListener("click", () => {
   openVVMEnvironment('dev');
 });
@@ -201,33 +212,53 @@ function openVVMEnvironment(environment) {
       targetDomain = 'https://uchebnik-test.mos.ru';
     }
 
-    // Извлекаем путь из текущего URL, если мы на нужном домене
+    // Извлекаем путь из текущего URL
     let path = '/materials/choice/test'; // путь по умолчанию
     
-    if (currentUrl && (currentUrl.includes('uchebnik-test.mos.ru') || currentUrl.includes('uchebnik-dev.mos.ru'))) {
+    if (currentUrl) {
       try {
         const url = new URL(currentUrl);
-        path = url.pathname + url.search + url.hash;
+        if (url.pathname && url.pathname !== '/') {
+          let extractedPath = url.pathname + url.search + url.hash;
+          
+          // Если путь начинается с /choice (с слэшем или без), добавляем /materials в начало
+          if (extractedPath.startsWith('/choice/') || extractedPath === '/choice') {
+            path = '/materials' + extractedPath;
+            // Если путь просто /choice, добавляем /test в конец
+            if (extractedPath === '/choice') {
+              path = '/materials/choice/test';
+            }
+          } else {
+            path = extractedPath;
+          }
+        }
       } catch (error) {
         console.error('Error parsing URL for VVM:', error);
       }
     }
 
-    // Заменяем домен на school-test.mos.ru
-    const vvmUrl = `https://school-test.mos.ru${path}`;
+    // Определяем целевой домен ВВМ
+    let vvmDomain;
+    if (environment === 'dev') {
+      vvmDomain = 'https://school-dev.mos.ru';
+    } else {
+      vvmDomain = 'https://school-test.mos.ru';
+    }
+    
+    const vvmUrl = `${vvmDomain}${path}`;
     
     console.log("VVM URL:", vvmUrl);
     console.log("Target domain for cookies:", targetDomain);
 
     document.getElementById("status").textContent = `Настраиваю ВВМ ${environment.toUpperCase()}...`;
 
-    // Сначала устанавливаем куку test=123 для school-test.mos.ru
+    // Сначала устанавливаем куку test=123 для целевого ВВМ домена
     chrome.cookies.set({
-      url: 'https://school-test.mos.ru',
+      url: vvmDomain,
       name: 'test',
       value: '123'
     }, () => {
-      console.log('Test cookie set for school-test.mos.ru');
+      console.log(`Test cookie set for ${vvmDomain}`);
       
       // Затем копируем куки с целевого домена
       chrome.runtime.sendMessage({ action: "copyAndPaste", domain: targetDomain }, res => {
@@ -281,5 +312,15 @@ function updateLocalhostButton() {
     } else {
       buttonText.textContent = 'Открыть в localhost';
     }
+  });
+}
+
+function openAuthPage(logoutUrl) {
+  console.log(`Opening auth page via logout: ${logoutUrl}`);
+  
+  // Открываем страницу logout, которая перебросит на авторизацию
+  chrome.tabs.create({ 
+    url: logoutUrl,
+    active: true 
   });
 }
