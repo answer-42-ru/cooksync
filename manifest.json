@@ -6,12 +6,14 @@
     "permissions": [
       "cookies",
       "storage",
-      "tabs"
+      "tabs",
+      "activeTab"
     ],
     "host_permissions": [
       "https://uchebnik-test.mos.ru/*",
       "https://uchebnik-dev.mos.ru/*",
       "https://*.mos.ru/*",
+      "http://localhost:3000/*",
       "http://localhost:3001/*",
       "https://localhost:3001/*"
     ],

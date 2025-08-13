@@ -10,8 +10,13 @@
 </head>
 <body>
   <h3>Cookie Sync</h3>
+  <div id="server-status" style="margin-bottom: 10px; display: flex; align-items: center;">
+    <span id="status-indicator" style="width: 10px; height: 10px; border-radius: 50%; background-color: #ccc; margin-right: 8px;"></span>
+    <span id="status-text">Проверяю сервер...</span>
+  </div>
   <button id="copy-test">Скопировать с теста</button>
   <button id="copy-dev">Скопировать с дева</button>
+  <button id="open-localhost" style="background-color: #2196F3; color: white;">Открыть в localhost</button>
   <p id="status"></p>
   <script src="popup.js"></script>
 </body>
