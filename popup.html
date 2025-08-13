@@ -1,23 +1,159 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <title>Cookie Sync</title>
   <style>
-    body { font-family: sans-serif; width: 200px; padding: 10px; }
-    button { width: 100%; margin: 5px 0; padding: 5px; }
+    body {
+      font-family: sans-serif;
+      width: 200px;
+      padding: 10px;
+    }
+
+    button {
+      width: 100%;
+      margin: 5px 0;
+      padding: 5px;
+    }
+
+    .session-indicator {
+      display: flex;
+      align-items: center;
+      margin: 3px 0;
+      font-size: 11px;
+    }
+
+    .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+
+    .indicator-dot.active {
+      background-color: #4CAF50;
+      /* Зеленый - активная сессия */
+    }
+
+    .indicator-dot.expired {
+      background-color: #f44336;
+      /* Красный - протухшая сессия */
+    }
+
+    .indicator-dot.unavailable {
+      background-color: #FF9800;
+      /* Желтый - недоступен */
+    }
+
+    .indicator-dot.loading {
+      background-color: #ccc;
+      /* Серый - загрузка */
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .indicator-label {
+      flex: 1;
+      color: #333;
+    }
+
+    #last-check-time.outdated {
+      color: #f44336;
+      font-weight: bold;
+    }
+
+    #refresh-sessions {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    #refresh-sessions:hover {
+      background-color: #e0e0e0;
+    }
+
+    #refresh-sessions:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   </style>
 </head>
+
 <body>
   <h3>Cookie Sync</h3>
-  <div id="server-status" style="margin-bottom: 10px; display: flex; align-items: center;">
-    <span id="status-indicator" style="width: 10px; height: 10px; border-radius: 50%; background-color: #ccc; margin-right: 8px;"></span>
-    <span id="status-text">Проверяю сервер...</span>
+  <!-- Статус Localhost -->
+  <div id="localhost-status" style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+    <h4 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Localhost Status</h4>
+    <div id="server-status" style="display: flex; align-items: center;">
+      <span id="status-indicator"
+        style="width: 10px; height: 10px; border-radius: 50%; background-color: #ccc; margin-right: 8px;"></span>
+      <span id="status-text">Проверяю сервер...</span>
+    </div>
   </div>
-  <button id="copy-test">Скопировать с теста</button>
-  <button id="copy-dev">Скопировать с дева</button>
-  <button id="open-localhost" style="background-color: #2196F3; color: white;">Открыть в localhost</button>
+
+  <!-- Статус Сессий -->
+  <div id="session-status" style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+    <h4 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Session Status</h4>
+    <div id="session-indicators">
+      <div class="session-indicator" data-endpoint="Uchebnik DEV">
+        <span class="indicator-dot loading"></span>
+        <span class="indicator-label">Uchebnik DEV</span>
+      </div>
+      <div class="session-indicator" data-endpoint="Uchebnik TEST">
+        <span class="indicator-dot loading"></span>
+        <span class="indicator-label">Uchebnik TEST</span>
+      </div>
+      <div class="session-indicator" data-endpoint="School DEV">
+        <span class="indicator-dot loading"></span>
+        <span class="indicator-label">School DEV</span>
+      </div>
+      <div class="session-indicator" data-endpoint="School TEST">
+        <span class="indicator-dot loading"></span>
+        <span class="indicator-label">School TEST</span>
+      </div>
+    </div>
+    <div id="last-check-time" style="font-size: 10px; color: #999; margin-top: 5px;">
+      Обновлено: --:--:--
+    </div>
+    <button id="refresh-sessions" style="font-size: 11px; padding: 3px 8px; margin-top: 5px;">🔄 Обновить</button>
+  </div>
+
+  <!-- Тестовое окружение ВВМ -->
+  <div id="vvm-test-environment" style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+    <h4 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Тестовое окружение ВВМ</h4>
+    <button id="vvm-dev" style="background-color: #FF9800; color: white; margin-bottom: 3px;">Переход в ВВМ DEV</button>
+    <button id="vvm-test" style="background-color: #9C27B0; color: white;">Переход в ВВМ TEST</button>
+  </div>
+
+  <!-- Действия с Куками -->
+  <div id="cookie-actions" style="margin-bottom: 10px;">
+    <h4 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Cookie Actions</h4>
+    <button id="copy-test">Скопировать с теста</button>
+    <button id="copy-dev">Скопировать с дева</button>
+    <button id="open-localhost" style="background-color: #2196F3; color: white;">
+      <span id="localhost-button-text">Открыть в localhost</span>
+    </button>
+  </div>
   <p id="status"></p>
+  <script src="sessionStatusService.js"></script>
+  <script src="sessionIndicators.js"></script>
   <script src="popup.js"></script>
 </body>
+
 </html>
